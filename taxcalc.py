@@ -185,15 +185,11 @@ class Tax():
         return countries
 
 def main():
-    if len(sys.argv) < 2:
-        die("Need an amount as an argument")
-    countries = Tax.read('bands.yaml')
-
     if len(sys.argv) != 3:
         usage()
+    countries = Tax.read('bands.yaml')
     if sys.argv[1] not in countries:
         die(f"Unknown country '{sys.argv[1]}'")
-
     taxes = countries[sys.argv[1]].taxes
     gross = int(sys.argv[2])
 
