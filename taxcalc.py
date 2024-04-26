@@ -119,8 +119,8 @@ class Tax():
                     lo_override = b.lo
                     continue
                 # Some of the band has been lost:
-                ebands.append((b.low(lo_override), new_hi, b.rate, lo_override is None))
-                lo_override = None
+                ebands.append((b.low(lo_override), new_hi, b.rate, False))
+                lo_override = new_hi + 0.01
                 continue
             # b.slope is none, just copy the band across
             ebands.append((b.low(lo_override), b.hi, b.rate, lo_override is None))
