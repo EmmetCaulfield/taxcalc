@@ -1,0 +1,130 @@
+taxes:
+  - id: uk/ni
+    country: United Kingdom
+    name: National Insurance
+    bands:
+      - high: 12583
+        rate: 0.0
+      - high: 50284
+        rate: 8.0
+      - rate: 2.0
+
+  - id: sco/paye
+    country: Scotland
+    name: PAYE
+    bands:
+      - high: 12570
+        rate: 0.0
+        slide:
+          origin: 100000
+          slope: -1/2
+      - high: 14876
+        rate: 19
+      - high: 26561
+        rate: 20
+      - high: 43662
+        rate: 21
+      - high: 75000
+        rate: 42
+      - high: 125140
+        rate: 45
+      - rate: 48
+
+  - id: eng/paye
+    name: PAYE
+    country: England
+    bands: &bands_enw
+      - high: 12570
+        rate: 0
+      - high: 50270
+        rate: 20
+      - high: 125140
+        rate: 40
+      - rate: 45
+
+  - id: wal/paye
+    name: PAYE
+    country: Wales
+    bands: *bands_enw
+
+  - id: sg/it
+    name: Income Tax
+    country: Singapore
+    bands:
+      - high: 20000
+        rate: 0
+      - high: 30000
+        rate: 2
+      - high: 40000
+        rate: 3.5
+      - high: 80000
+        rate: 7
+      - high: 120000
+        rate: 11.5
+      - high: 160000
+        rate: 15
+      - high: 200000
+        rate: 17
+      - high: 320000
+        rate: 18
+      - rate: 20
+    altmin:
+      - rate: 15
+
+  - id: ie/paye
+    name: PAYE
+    country: Ireland
+    bands:
+      - high: 51000
+        rate: 20
+      - rate: 40
+    credits:
+      - id: mptc
+        name: Married Person's Tax Credit
+        amount: 3750
+      - id: etc
+        name: Employee Tax Credit
+        amount: 1875
+      - id: hctc
+        name: Home Carer's Tax Credit
+        amount: 1800
+      
+  - id: ie/prsi/a
+    name: PRSI Class A
+    country: Ireland
+    bands:
+      - rate: 4
+
+  - id: ie/usc
+    name: USC
+    country: Ireland
+    bands:
+      - high: 12012
+        rate: 0.5
+      - high: 25760
+        rate: 2
+      - high: 70044
+        rate: 4
+      - rate: 8
+
+countries:
+  - id: ie
+    name: Ireland
+    taxes:
+      - ie/paye
+      - ie/prsi/a
+      - ie/usc
+  - id: sco
+    name: Scotland
+    taxes:
+      - uk/ni
+      - sco/paye
+  - id: eng
+    name: England
+    taxes:
+      - uk/ni
+      - eng/paye
+  - id: sg
+    name: Singapore
+    taxes:
+      - sg/it
