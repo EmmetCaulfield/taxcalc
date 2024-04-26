@@ -13,22 +13,29 @@ taxes:
     country: Scotland
     name: PAYE
     bands:
-      - high: 12570
+      - name: personal allowance
+        high: 12570
         rate: 0.0
         slide:
           origin: 100000
           slope: -1/2
-      - high: 14876
+      - name: starter rate
+        high: 14876
         rate: 19
-      - high: 26561
+      - name: basic rate
+        high: 26561
         rate: 20
-      - high: 43662
+      - name: intermediate rate
+        high: 43662
         rate: 21
-      - high: 75000
+      - name: higher rate
+        high: 75000
         rate: 42
-      - high: 125140
+      - name: advanced rate
+        high: 125140
         rate: 45
-      - rate: 48
+      - name: top rate
+        rate: 48
 
   - id: eng/paye
     name: PAYE
@@ -75,9 +82,11 @@ taxes:
     name: PAYE
     country: Ireland
     bands:
-      - high: 51000
+      - name: standard rate
+        high: 51000
         rate: 20
-      - rate: 40
+      - name: higher rate
+        rate: 40
     credits:
       - id: mptc
         name: Married Person's Tax Credit
