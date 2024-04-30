@@ -189,7 +189,8 @@ def main():
         usage()
     countries = Tax.read('bands.yaml')
     if sys.argv[1] not in countries:
-        die(f"Unknown country '{sys.argv[1]}'")
+        codes = list(countries.keys())
+        die(f"Unknown country '{sys.argv[1]}' (not in {codes})")
     taxes = countries[sys.argv[1]].taxes
     gross = int(sys.argv[2])
 
