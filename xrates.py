@@ -27,7 +27,7 @@ class Currency():
     def mean(self: object, sym: str, dp:int = 4) -> float:
         return round(mean(self.to_sym[sym]), dp)
 
-    def median(self: object, sym: str) -> float:
+    def median(self: object, sym: str, dp:int = 4) -> float:
         return round(median(self.to_sym[sym]), dp)
 
     def max(self: object, sym: str, dp:int = 4) -> float:
@@ -71,6 +71,8 @@ def main():
     usd = loadCurrencyData()
     amt = float(sys.argv[1])
     cc  = sys.argv[2].upper()
+    if cc == "STG":
+        cc = "GBP"
     cur = usd.invert(cc)
     if cur is None:
         die("Unknown currency code '{cc}'")
@@ -78,7 +80,9 @@ def main():
         lo = cur.min(code) * amt
         mid = cur.mean(code) * amt
         hi = cur.max(code) * amt
-        print(f"{code} {lo:.2f} {mid:.2f} {hi:.2f}")
+        p = 100*(hi - mid)/mid
+        m = 100*(mid - lo)/mid
+        print(f"{code} {lo:.2f} {mid:.2f} {hi:.2f} (-{m:.2f}/+{p:.2f}%)")
     
 if __name__ == "__main__":
     main()
