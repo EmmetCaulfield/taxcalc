@@ -2,13 +2,14 @@
 
 import sys
 import yaml
+import xrates
 
 def die(msg: str, code: int=2):
     print(f'FATAL: {msg}')
     sys.exit(code)
 
 def usage():
-    print("USAGE: taxcalc <country-code> <gross-pay>")
+    print("USAGE: taxcalc [-r] <country-code> <gross-pay>")
     sys.exit(1)
     
 class Band():
@@ -49,7 +50,19 @@ class Country():
 
     def addTax(self:object, tax: object) -> None:
         self.taxes.append(tax)
-    
+
+    def grossTax(self:object, gross:float, prn:bool = True) -> float:
+        gtax = 0.0
+        for t in self.taxes:
+            if prn:
+                print(f"{t.name} ({t.country})")
+            amt = t.grossTax(gross, prn)
+            if prn:
+                print(f"{t.name:>57s}: {amt:9.2f}\n")
+            gtax += amt
+        return round(gtax, 2)
+
+
 class Tax():
     def __init__(self: object, id: str, name: str, country: str) -> None:
         self.id = id
@@ -77,10 +90,11 @@ class Tax():
         self.credits.append(cr)
         return cr
 
-    def totalCredits(self: object) -> float:
+    def totalCredits(self: object, prn:bool = True) -> float:
         ttl = 0.0
         for cr in self.credits:
-            print(f"\t{cr.name:>49s}: ({cr.amount:-8.2f})")
+            if prn:
+                print(f"\t{cr.name:>49s}: ({cr.amount:-8.2f})")
             ttl += cr.amount
         return ttl
 
@@ -91,7 +105,7 @@ class Tax():
             return 0.0
 
     # Gross tax before credits
-    def grossTaxBeforeCredits(self: object, gross: float) -> float:
+    def grossTaxBeforeCredits(self: object, gross: float, prn:bool=True) -> float:
         # Compute effective bands, applying sliding bands if any:
         ebands = []
         lo_override = None
@@ -137,11 +151,12 @@ class Tax():
             t = span * float(rate)/100.0
             tax += t
             star = ' ' if adj else '*'
-            print(f"  Band {i}{star}{lo:9.2f}, {hi:9.2f}, {rate:4.1f} : {span:9.2f}, {t:8.2f}, {tax:9.2f}")
+            if prn:
+                print(f"  Band {i}{star}{lo:9.2f}, {hi:9.2f}, {rate:4.1f} : {span:9.2f}, {t:8.2f}, {tax:9.2f}")
         return tax
 
-    def grossTax(self: object, gross: float) -> float:
-        tax = self.grossTaxBeforeCredits(gross) - self.totalCredits()
+    def grossTax(self: object, gross: float, prn:bool=True) -> float:
+        tax = self.grossTaxBeforeCredits(gross, prn) - self.totalCredits(prn)
         atax = self.alternativeMinimumTax(gross)
         return max(tax, atax)
 
@@ -184,28 +199,97 @@ class Tax():
             countries[c.id] = c
         return countries
 
-def main():
-    if len(sys.argv) != 3:
-        usage()
-    countries = Tax.read('bands.yaml')
-    if sys.argv[1] not in countries:
-        codes = list(countries.keys())
-        die(f"Unknown country '{sys.argv[1]}' (not in {codes})")
-    taxes = countries[sys.argv[1]].taxes
-    gross = int(sys.argv[2])
+def bisect(country: object, nett: float) -> float:
+    # Round the nett to the penny:
+    nett = round(nett, 2)
 
+    # The low gross can't be less than the nett unless there's
+    # zero or negative taxation:
+    logross = nett
+
+    # Guess a high gross and increase it until we find a high gross
+    # that netts more than the nett
+    higross = 2*nett
+    hinett = higross - country.grossTax(higross, False)
+    while hinett < nett:
+        higross *= 1.5
+        hitax = country.grossTax(higross, False)
+        hinett = higross - hitax
+
+    # We now have a higross that netts more than the nett and a
+    # logross that netts less than the nett. Perform a binary search
+    # to find the gross that yields the nett to the penny
+    while True:
+        midgross =  round(logross + (higross - logross)/2.0, 2)
+        midtax = country.grossTax(midgross, False)
+        midnett = midgross - midtax
+        # If the midgross netts more than the nett, then it is the new
+        # higross
+        if round(midnett,2) > nett:
+            higross = midgross
+        # If the midgross yields less than the nett, then it is the
+        # new logross:
+        elif round(midnett,2) < nett:
+            logross = midgross
+        else:
+            break
+
+    return midgross
+    
+# findGross answers the question "given a nett salary after income
+# tax, `nett`, in a country, `cc`, what gross salary would I need in
+# the local currency in other countries (for which data exists) to
+# have the same nett salary given those countries' tax regimes and
+# current exchange rates?"
+#
+# The nett corresponding to `gross` in country `cc` is calculated,
+# currency converted to equivalent netts in the currencies of the
+# other countries, then bisection is used to determine the gross
+# necessary to provide that nett in the other available countries.
+def equivGross(gross: float, cc: str):
+    pass
+    
+def main():
+    reverse = False
+    args = sys.argv[1:]
+    if len(args) < 2 or len(args) > 3:
+        usage()
+    if len(args) == 3:
+        if args[0] == "-r":
+            reverse = True
+            args = args[1:]
+        else:
+            usage()
+    if len(args) != 2:
+        usage()
+    cc = args[0]
+    amt = args[1]
+        
+    countries = Tax.read('bands.yaml')
+    if cc not in countries:
+        codes = list(countries.keys())
+        die(f"Unknown country '{cc}' (not in {codes})")
+    if reverse:
+        gross = int(bisect(countries[cc], float(amt)))
+    else:
+        gross = int(amt)
+
+    taxes = countries[cc].taxes
     itax = []
     ttax = 0.0
+    prn = True
     for t in taxes:
-        print(f"{t.name} ({t.country})")
-        amt = t.grossTax(gross)
-        print(f"{t.name:>57s}: {amt:9.2f}\n")
+        if prn:
+            print(f"{t.name} ({t.country})")
+        amt = t.grossTax(gross, prn)
+        if prn:
+            print(f"{t.name:>57s}: {amt:9.2f}\n")
         itax.append(str(round(amt)))
         ttax += amt
     nett = gross - ttax
     burden = round(100.0*ttax/gross, 2)
-
     print(f"{gross} -> {round(nett)} ({round(ttax)}={'+'.join(itax)} = {burden}%)")
+
 
 if __name__ == "__main__":
     main()

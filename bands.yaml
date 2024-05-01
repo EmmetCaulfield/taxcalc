@@ -119,21 +119,28 @@ taxes:
 countries:
   - id: ie
     name: Ireland
+    currency: EUR
     taxes:
       - ie/paye
       - ie/prsi/a
       - ie/usc
+
   - id: sco
     name: Scotland
+    currency: GBP
     taxes:
       - uk/ni
       - sco/paye
+
   - id: eng
     name: England
+    currency: GBP
     taxes:
       - uk/ni
       - eng/paye
+
   - id: sg
     name: Singapore
+    currency: SGD
     taxes:
       - sg/it
