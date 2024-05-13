@@ -42,6 +42,12 @@ class Credit():
         self.name = name
         self.amount = float(amount)
 
+class Deduction():
+    def __init__(self: object, id: str, name: str, amount: str) -> None:
+        self.id = id
+        self.name = name
+        self.amount = float(amount)
+
 class Country():
     def __init__(self:object, id:str, name:str, curr:str) -> None:
         self.id = id
@@ -75,8 +81,11 @@ class Tax():
         # Singapore):
         self.altmin = None
         
-        # To apply tax credits (as is done in Ireland):
+        # To apply tax credits (as is done in Ireland & USA):
         self.credits = []
+
+        # To apply gross taxable amount deductions (as is done in USA):
+        self.deductions = []
 
     def appendBand(self: object, hi: str, rate: str) -> object:
         lo = 0.0
@@ -99,6 +108,19 @@ class Tax():
             ttl += cr.amount
         return ttl
 
+    def appendDeduction(self: object, id: str, name: str, amount: str) -> object:
+        ded = Deduction(id, name, amount)
+        self.deductions.append(ded)
+        return ded
+
+    def totalDeductions(self: object, prn:bool = True) -> float:
+        ttl = 0.0
+        for ded in self.deductions:
+            if prn:
+                print(f"\t{ded.name:>49s}: ({ded.amount:-8.2f})")
+            ttl += ded.amount
+        return ttl
+
     def alternativeMinimumTax(self: object, gross: float) -> float:
         if self.altmin is not None:
             return gross * float(self.altmin)/100.0
@@ -111,6 +133,8 @@ class Tax():
         ebands = []
         lo_override = None
         # print(yaml.dump(self.bands))
+        if prn:
+            print(f"\t{'Gross Taxable Amount':>49s}: {gross:-9.2f}")
         for i, b in enumerate(self.bands):
             if b.slope is not None:
                 # print("Applying slope")
@@ -157,7 +181,8 @@ class Tax():
         return tax
 
     def grossTax(self: object, gross: float, prn:bool=True) -> float:
-        tax = self.grossTaxBeforeCredits(gross, prn) - self.totalCredits(prn)
+        agi = gross - self.totalDeductions(prn)
+        tax = self.grossTaxBeforeCredits(agi, prn) - self.totalCredits(prn)
         atax = self.alternativeMinimumTax(gross)
         return max(tax, atax)
 
@@ -190,6 +215,9 @@ class Tax():
             if "credits" in tax:
                 for cr in tax["credits"]:
                     t.appendCredit(cr["id"], cr["name"], cr["amount"])
+            if "deductions" in tax:
+                for ded in tax["deductions"]:
+                    t.appendDeduction(ded["id"], ded["name"], ded["amount"])
             if "altmin" in tax:
                 t.altmin = float(tax["altmin"][0]["rate"])
             taxes[t.id] = t
@@ -268,7 +296,7 @@ def equivGross(countries: dict[object], gross: float, cctld: str) -> None:
         dst_gross = round(bisect(dst_country, dst_nett), 2)
         dst_ttax = round(dst_gross - dst_nett, 2)
         burden = round(100.0*dst_ttax/dst_gross, 2)
-        print(f"{dst_country.id:3s}: {dst_gross} -> {dst_nett} ({dst_ttax} = {burden}%)")
+        print(f"{dst_country.id:5s}: {dst_gross:.2f} -> {dst_nett:.2f} ({dst_ttax:9.2f} = {burden:4.1f}%)")
 
 
 def main():
@@ -314,7 +342,7 @@ def main():
         ttax += amt
     nett = gross - ttax
     burden = round(100.0*ttax/gross, 2)
-    print(f"{gross} -> {round(nett)} ({round(ttax)}={'+'.join(itax)} = {burden}%)")
+    print(f"{gross} -> {round(nett)} ({round(ttax)}={'+'.join(itax)} = {burden}%)\n")
 
     if reverse:
         equivGross(countries, gross, cc)

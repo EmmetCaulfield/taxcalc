@@ -1,4 +1,78 @@
 taxes:
+  - id: us/fed/s
+    country: United States of America
+    name: US Federal Income Tax
+    bands:
+      - high: 11600
+        rate: 10
+      - high: 47150
+        rate: 12
+      - high: 100525
+        rate: 22
+      - high: 191950
+        rate: 24
+      - high: 243725
+        rate: 32
+      - high: 609350
+        rate: 35
+      - rate: 37
+    deductions:
+      - id: stdd
+        name: Standard Deduction
+        amount: 13850
+
+  - id: us/fed/mfj
+    country: United States of America
+    name: Federal Income Tax
+    bands:
+      - high: 23200
+        rate: 10
+      - high: 94300
+        rate: 12
+      - high: 201050
+        rate: 22
+      - high: 383900
+        rate: 24
+      - high: 487450
+        rate: 32
+      - high: 731200
+        rate: 35
+      - rate: 37
+    deductions:
+      - id: stdd
+        name: Standard Deduction
+        amount: 27700
+    credits:
+      - id: ctc
+        name: Child Tax Credit
+        amount: 2000
+
+  - id: us/ca/mfj
+    country: California
+    name: State Income Tax
+    bands:
+      - high: 20824
+        rate: 1
+      - high: 49368
+        rate: 2
+      - high: 77918
+        rate: 4
+      - high: 108162
+        rate: 6
+      - high: 136700
+        rate: 8
+      - high: 698274
+        rate: 9.3
+      - high: 837922
+        rate: 10.3
+      - high: 1396542
+        rate: 11.3
+      - rate: 12.3
+    deductions:
+      - id: stdd
+        name: Standard Deduction
+        amount: 10726
+
   - id: uk/ni
     country: United Kingdom
     name: National Insurance
@@ -144,3 +218,10 @@ countries:
     currency: SGD
     taxes:
       - sg/it
+
+  - id: ca.us
+    name: California, USA
+    currency: USD
+    taxes:
+      - us/fed/mfj
+      - us/ca/mfj
