@@ -25,6 +25,8 @@ class Currency():
         self.to_sym[sym].append(float(val)/float(self.amount))
 
     def mean(self: object, sym: str, dp:int = 4) -> float:
+        if sym not in self.to_sym:
+            raise KeyError(f"Symbol '{sym}' not in {list(self.to_sym.keys())}")
         return round(mean(self.to_sym[sym]), dp)
 
     def median(self: object, sym: str, dp:int = 4) -> float:

@@ -43,9 +43,10 @@ class Credit():
         self.amount = float(amount)
 
 class Country():
-    def __init__(self: object, id: str, name: str) -> None:
+    def __init__(self:object, id:str, name:str, curr:str) -> None:
         self.id = id
         self.name = name
+        self.curr = curr
         self.taxes = []
 
     def addTax(self:object, tax: object) -> None:
@@ -193,7 +194,7 @@ class Tax():
                 t.altmin = float(tax["altmin"][0]["rate"])
             taxes[t.id] = t
         for country in tax_data["countries"]:
-            c = Country(country["id"], country["name"])
+            c = Country(country["id"], country["name"], country["currency"])
             for t in country["taxes"]:
                 c.addTax(taxes[t])
             countries[c.id] = c
@@ -236,19 +237,40 @@ def bisect(country: object, nett: float) -> float:
 
     return midgross
     
-# findGross answers the question "given a nett salary after income
-# tax, `nett`, in a country, `cc`, what gross salary would I need in
-# the local currency in other countries (for which data exists) to
-# have the same nett salary given those countries' tax regimes and
-# current exchange rates?"
+# Exchange rate data based on US Dollar
+USD = None
+
+
+# equivGross answers the question "given a gross salary `gross`, in a
+# country, `cc`, what gross salary would I need in the local currency
+# in other countries (for which data exists) to have the same nett
+# salary given those countries' tax regimes and current exchange
+# rates?"
 #
 # The nett corresponding to `gross` in country `cc` is calculated,
 # currency converted to equivalent netts in the currencies of the
 # other countries, then bisection is used to determine the gross
 # necessary to provide that nett in the other available countries.
-def equivGross(gross: float, cc: str):
-    pass
-    
+def equivGross(countries: dict[object], gross: float, cctld: str) -> None:
+    if cctld not in countries:
+        die(f"Country code '{cctld}' not found")
+    src_country = countries[cctld]
+    nett = round(gross - src_country.grossTax(gross, False))
+    curr = USD.invert(src_country.curr)
+    if curr == None:
+        die("Unknown currency code '{src_country.curr}'")
+    for dst_cctld in countries.keys():
+        dst_country = countries[dst_cctld]
+        if dst_country.curr == src_country.curr:
+            dst_nett = nett
+        else:
+            dst_nett = nett*round(curr.mean(dst_country.curr), 2)
+        dst_gross = round(bisect(dst_country, dst_nett), 2)
+        dst_ttax = round(dst_gross - dst_nett, 2)
+        burden = round(100.0*dst_ttax/dst_gross, 2)
+        print(f"{dst_country.id:3s}: {dst_gross} -> {dst_nett} ({dst_ttax} = {burden}%)")
+
+
 def main():
     reverse = False
     args = sys.argv[1:]
@@ -264,12 +286,16 @@ def main():
         usage()
     cc = args[0]
     amt = args[1]
-        
+
     countries = Tax.read('bands.yaml')
     if cc not in countries:
         codes = list(countries.keys())
         die(f"Unknown country '{cc}' (not in {codes})")
     if reverse:
+        # Load currency conversion:
+        global USD
+        USD = xrates.loadCurrencyData()
+        # Find the corresponding gross by bisection:
         gross = int(bisect(countries[cc], float(amt)))
     else:
         gross = int(amt)
@@ -290,6 +316,8 @@ def main():
     burden = round(100.0*ttax/gross, 2)
     print(f"{gross} -> {round(nett)} ({round(ttax)}={'+'.join(itax)} = {burden}%)")
 
+    if reverse:
+        equivGross(countries, gross, cc)
 
 if __name__ == "__main__":
     main()
