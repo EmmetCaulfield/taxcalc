@@ -14,8 +14,15 @@ today  := $(shell date --iso)
 fado   := $(shell date -d'$(period)' --iso)
 xeurl  := $(xebase)?from=$(xefrom)&to=$(xeto)&start_timestamp=$(fado)&end_timestamp=$(today)
 
+xrurl := https://v6.exchangerate-api.com/v6/$(xrak)/latest/$(xefrom)
+
 xrates.json:
 	curl -u '$(user):$(pass)' '$(xeurl)' | json_pp | tee $@
+
+xr-$(today).json:
+	curl '$(xrurl)' | json_pp | tee $@
+
+getxr: xr-$(today).json
 
 .PHONY: default
 default:
@@ -23,7 +30,7 @@ default:
 
 .PHONY: clean
 clean:
-	rm -f *~
+	rm -f xr-api.json *~
 
 .PHONY: pristine
 pristine: clean
