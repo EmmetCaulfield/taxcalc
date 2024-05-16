@@ -296,7 +296,7 @@ def equivGross(countries: dict[object], gross: float, cctld: str) -> None:
         dst_gross = round(bisect(dst_country, dst_nett), 2)
         dst_ttax = round(dst_gross - dst_nett, 2)
         burden = round(100.0*dst_ttax/dst_gross, 2)
-        print(f"{dst_country.id:5s}: {dst_gross:.2f} -> {dst_nett:.2f} ({dst_ttax:9.2f} = {burden:4.1f}%)")
+        print(f"{dst_country.id:5s} ({dst_country.curr:3s}): {dst_gross:.2f} -> {dst_nett:.2f} ({dst_ttax:9.2f} = {burden:4.1f}%)")
 
 
 def main():
