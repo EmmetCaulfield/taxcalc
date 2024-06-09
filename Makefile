@@ -35,7 +35,14 @@ getxr: $(xrtoday)
 rmxr:
 	rm -f $(xrtoday)
 
-sked: getxr
+atclean:
+	@for j in $$(atq | awk '{print $$1}'); do \
+		if at -c $$j | grep -qs '^make sked$$'; then \
+			atrm $$j ;\
+		fi ;\
+	done
+
+sked: getxr atclean
 	echo 'make sked' | at -M 7:$(randmin)am tomorrow
 
 retry: rmxr getxr
