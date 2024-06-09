@@ -5,6 +5,9 @@
 #     pass := <xe.com Account API Key>
 include credentials.mk
 
+verbose :=
+randmin := $(shell awk 'BEGIN{srand();printf("%d", 60*rand())}')
+
 xebase := https://xecdapi.xe.com/v1/historic_rate/period/
 xefrom := USD
 xeto   := GBP,EUR,SGD
@@ -15,14 +18,27 @@ fado   := $(shell date -d'$(period)' --iso)
 xeurl  := $(xebase)?from=$(xefrom)&to=$(xeto)&start_timestamp=$(fado)&end_timestamp=$(today)
 
 xrurl := https://v6.exchangerate-api.com/v6/$(xrak)/latest/$(xefrom)
+xrtoday := xr-$(today).json
 
 xrates.json:
 	curl -u '$(user):$(pass)' '$(xeurl)' | json_pp | tee $@
 
-xr-$(today).json:
+$(xrtoday):
+ifeq "$(verbose)" "yes"
 	curl '$(xrurl)' | json_pp | tee $@
+else
+	@curl -s '$(xrurl)' | json_pp > $@
+endif
 
-getxr: xr-$(today).json
+getxr: $(xrtoday)
+
+rmxr:
+	rm -f $(xrtoday)
+
+sked: getxr
+	echo 'make sked' | at -M 7:$(randmin)am tomorrow
+
+retry: rmxr getxr
 
 .PHONY: default
 default:
@@ -30,7 +46,7 @@ default:
 
 .PHONY: clean
 clean:
-	rm -f xr-api.json *~
+	rm -f *~
 
 .PHONY: pristine
 pristine: clean
